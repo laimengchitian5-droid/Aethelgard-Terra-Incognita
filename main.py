@@ -2,27 +2,41 @@ import streamlit as st
 import interface, synapse, database, constellation, evaluator, env_setup
 import pandas as pd
 
-# 環境初期化
+# 1. システム初期化
 env_setup.check_env()
 interface.init_style()
 
-# セッション状態
+# 2. セッション状態の管理
 if "messages" not in st.session_state: st.session_state.messages = []
 if "aligned" not in st.session_state: st.session_state.aligned = False
 
 # --- サイドバー構成 ---
 with st.sidebar:
     st.title("🛡️ Aethelgard")
+    
     if st.session_state.aligned:
-        st.caption("SYSTEM: Hologram Interface Active")
-        # 次世代ホログラムチャートを表示
+        # 称号のサイバーパンク表示 (手順3の統合)
+        p_type = evaluator.get_personality_type(st.session_state.scores)
+        st.markdown(f"""
+            <div style="padding:15px; border-radius:10px; border:1px solid #00d4ff; 
+                        background:rgba(0,212,255,0.1); text-align:center; margin-bottom:20px;
+                        box-shadow: 0 0 15px rgba(0,212,255,0.2);">
+                <span style="color:#00d4ff; font-size:0.7rem; letter-spacing:2px;">USER IDENTIFIED AS</span><br>
+                <span style="color:white; font-size:1.1rem; font-weight:bold;">{p_type['title']}</span>
+            </div>
+        """, unsafe_allow_html=True)
+
+        # ホログラム・レーダーチャートの表示
         fig = constellation.draw_hologram_radar(st.session_state.scores)
         st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
         
-        # 解析データ（ダミー数値）
-        col1, col2 = st.columns(2)
-        with col1: st.metric("Sync Rate", "98.2%", "+0.4%")
-        with col2: st.metric("Stability", "Optimal")
+        # 解析ステータス
+        with st.expander("📝 Analysis Detail"):
+            st.write(p_type['desc'])
+            st.divider()
+            col1, col2 = st.columns(2)
+            with col1: st.metric("Sync", "98.2%")
+            with col2: st.metric("Core", "Stable")
         
         st.divider()
         if st.button("🔄 再解析プロトコル"):
@@ -30,14 +44,15 @@ with st.sidebar:
             st.rerun()
     else:
         st.info("精神解析プロトコル：未完了")
-        constellation.draw_3d_map() # 待機中は3Dマップを表示
+        constellation.draw_3d_map()
 
 # --- メインコンテンツ ---
 if not st.session_state.aligned:
     st.title("🌌 Core Alignment Protocol (BFI-2-S)")
-    st.info("1: 全く当てはまらない ～ 5: 非常に当てはまる")
+    st.caption("Aethelgard OS：精神構造のデジタル・アラインメントを実行します。")
+    st.info("各項目について、自分にどの程度当てはまるか選択してください。")
 
-    # BFI-2-S 30問の定義
+    # BFI-2-S 全30問
     questions = [
         "1. 社交的で、活発なほうだ", "2. 静かで、口数が少ないほうだ(※)", "3. 活気にあふれ、他人を惹きつける",
         "4. 恥ずかしがり屋で、控えめなほうだ(※)", "5. 支配的で、他人に影響力を行使するほうだ", "6. 自分の意見をあまり主張しないほうだ(※)",
@@ -56,20 +71,28 @@ if not st.session_state.aligned:
         responses[f"Q{i+1}"] = st.select_slider(q, options=[1, 2, 3, 4, 5], value=3, key=f"bfi_{i}")
 
     if st.button("プロトコル実行（診断完了）", type="primary"):
-        st.session_state.scores = evaluator.calculate_bfi2_scores(responses)
-        st.session_state.aligned = True
-        st.rerun()
+        with st.spinner("精神構造を走査中..."):
+            st.session_state.scores = evaluator.calculate_bfi2_scores(responses)
+            st.session_state.aligned = True
+            st.rerun()
 
 else:
+    # --- チャットインターフェース ---
     st.title("🛡️ Aethelgard OS")
+    
     for msg in st.session_state.messages:
-        with st.chat_message(msg["role"]): st.markdown(msg["content"])
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
 
     if prompt := st.chat_input("指令を入力..."):
         st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"): st.markdown(prompt)
+        with st.chat_message("user"):
+            st.markdown(prompt)
+
         with st.chat_message("assistant"):
+            # 称号を考慮した応答生成
             res = synapse.generate_response(prompt, st.session_state.messages, st.session_state.scores)
             st.markdown(res)
+        
         st.session_state.messages.append({"role": "assistant", "content": res})
         database.save_log(prompt, res)
