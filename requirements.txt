@@ -1,0 +1,6 @@
+streamlit
+groq
+plotly
+numpy
+duckduckgo-search
+pandas
