@@ -1,37 +1,43 @@
 import streamlit as st
 import interface, synapse, database, constellation, evaluator, env_setup
-import plotly.express as px
 import pandas as pd
 
+# 環境初期化
 env_setup.check_env()
 interface.init_style()
 
+# セッション状態
 if "messages" not in st.session_state: st.session_state.messages = []
 if "aligned" not in st.session_state: st.session_state.aligned = False
 
-# --- サイドバー ---
+# --- サイドバー構成 ---
 with st.sidebar:
     st.title("🛡️ Aethelgard")
     if st.session_state.aligned:
-        scores = st.session_state.scores
-        df = pd.DataFrame(dict(r=list(scores.values()), theta=list(scores.keys())))
-        fig = px.line_polar(df, r='r', theta='theta', line_close=True)
-        fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', font_color="white", polar=dict(radialaxis=dict(visible=True, range=[1, 5])))
-        st.plotly_chart(fig, use_container_width=True)
-        if st.button("再診断を行う"):
+        st.caption("SYSTEM: Hologram Interface Active")
+        # 次世代ホログラムチャートを表示
+        fig = constellation.draw_hologram_radar(st.session_state.scores)
+        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+        
+        # 解析データ（ダミー数値）
+        col1, col2 = st.columns(2)
+        with col1: st.metric("Sync Rate", "98.2%", "+0.4%")
+        with col2: st.metric("Stability", "Optimal")
+        
+        st.divider()
+        if st.button("🔄 再解析プロトコル"):
             st.session_state.aligned = False
             st.rerun()
     else:
-        st.info("精神解析プロトコル未完了")
+        st.info("精神解析プロトコル：未完了")
+        constellation.draw_3d_map() # 待機中は3Dマップを表示
 
 # --- メインコンテンツ ---
 if not st.session_state.aligned:
     st.title("🌌 Core Alignment Protocol (BFI-2-S)")
-    st.caption("Aethelgard OSをあなたの精神に同調させます。")
-    st.write("以下の30の項目について、あなた自身にどの程度当てはまるか回答してください。")
     st.info("1: 全く当てはまらない ～ 5: 非常に当てはまる")
 
-    # BFI-2-S 全30問の定義
+    # BFI-2-S 30問の定義
     questions = [
         "1. 社交的で、活発なほうだ", "2. 静かで、口数が少ないほうだ(※)", "3. 活気にあふれ、他人を惹きつける",
         "4. 恥ずかしがり屋で、控えめなほうだ(※)", "5. 支配的で、他人に影響力を行使するほうだ", "6. 自分の意見をあまり主張しないほうだ(※)",
@@ -46,20 +52,15 @@ if not st.session_state.aligned:
     ]
 
     responses = {}
-    
-    # セクション分けして表示（UX向上）
     for i, q in enumerate(questions):
         responses[f"Q{i+1}"] = st.select_slider(q, options=[1, 2, 3, 4, 5], value=3, key=f"bfi_{i}")
 
-    st.divider()
     if st.button("プロトコル実行（診断完了）", type="primary"):
-        with st.spinner("精神構造を解析中..."):
-            st.session_state.scores = evaluator.calculate_bfi2_scores(responses)
-            st.session_state.aligned = True
-            st.rerun()
+        st.session_state.scores = evaluator.calculate_bfi2_scores(responses)
+        st.session_state.aligned = True
+        st.rerun()
 
 else:
-    # チャット画面（以前と同じ）
     st.title("🛡️ Aethelgard OS")
     for msg in st.session_state.messages:
         with st.chat_message(msg["role"]): st.markdown(msg["content"])
