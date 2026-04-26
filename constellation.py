@@ -1,29 +1,19 @@
 import plotly.graph_objects as go
 
-def draw_hologram(analysis_data, is_mobile=True):
-    f = analysis_data["facets"]
-    p = analysis_data["physics"]
+def draw_hologram(data, is_mobile=True):
+    f, p = data["facets"], data["physics"]
+    cat = list(f.keys())
+    val = list(f.values())
     
-    # 物理量に基づく発光演出
-    glow = "rgba(0, 255, 255, 0.8)"
-    if p['S'] > 12: glow = "rgba(255, 50, 50, 0.9)" # 葛藤・赤
-    elif p['V'] > 40: glow = "rgba(230, 230, 255, 1.0)" # 極光・白
+    color = "rgba(0, 255, 255, 0.8)"
+    if p['S'] > 12: color = "rgba(255, 50, 50, 0.9)"
+    elif p['V'] > 40: color = "rgba(230, 230, 255, 1.0)"
 
-    fig = go.Figure(data=[go.Scatterpolar(
-        r=list(f.values()) + [list(f.values())[0]],
-        theta=list(f.keys()) + [list(f.keys())[0]],
-        fill='toself',
-        line=dict(color=glow, width=3),
-        fillcolor=glow.replace('0.8','0.2').replace('1.0','0.3')
-    )])
-
-    fig.update_layout(
-        polar=dict(
-            bgcolor="black",
-            radialaxis=dict(visible=True, range=[1, 5], gridcolor="rgba(0,255,255,0.1)")
-        ),
-        paper_bgcolor="black",
-        height=450 if is_mobile else 650,
-        showlegend=False
-    )
+    fig = go.Figure(go.Scatterpolar(r=val+[val], theta=cat+[cat], fill='toself', 
+                                    line=dict(color=color, width=3),
+                                    fillcolor=color.replace('0.8','0.2').replace('1.0','0.3')))
+    fig.update_layout(polar=dict(bgcolor="black", radialaxis=dict(visible=True, range=)),
+                      paper_bgcolor="black", showlegend=False, margin=dict(l=30, r=30, t=30, b=30),
+                      height=450 if is_mobile else 600)
     return fig
+ return fig
