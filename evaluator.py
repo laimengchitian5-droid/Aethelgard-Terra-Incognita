@@ -12,11 +12,11 @@ QUESTIONS_30 = [
 REV = [3, 5, 8, 12, 16, 17, 19, 22, 24, 25, 27, 30]
 
 F_MAP = {
-    "社交性":[1, 16], "自己主張":[6, 21], "活力":[11, 26],
-    "共感性":[2, 17], "謙虚さ":[7, 22], "信頼性":[12, 27],
-    "体制化":[18, 3], "勤勉性":[23, 8], "責任感":[13, 28],
-    "不安":[4, 19], "抑うつ":[9, 24], "情緒不安定":[14, 29],
-    "好奇心":[10, 25], "審美眼":[5, 20], "想像力":[15, 30]
+    "社交性": [1, 16], "自己主張": [6, 21], "活力": [11, 26],
+    "共感性": [2, 17], "謙虚さ": [7, 22], "信頼性": [12, 27],
+    "体制化": [3, 18], "勤勉性": [8, 23], "責任感": [13, 28],
+    "不安": [4, 19], "抑うつ": [9, 24], "情緒不安定": [14, 29],
+    "好奇心": [10, 25], "審美眼": [5, 20], "想像力": [15, 30]
 }
 
 def run_advanced_analysis(resp):
@@ -27,7 +27,7 @@ def run_advanced_analysis(resp):
     theta = np.linspace(0, 2*np.pi, 15, endpoint=False)
     pts = np.column_stack((r*np.cos(theta), r*np.sin(theta)))
     
-    stress = np.sum(np.abs(np.diff(np.append(r, r))))
+    stress = np.sum(np.abs(np.diff(np.append(r, r[0]))))
     vol = 0.5 * np.abs(np.dot(pts[:,0], np.roll(pts[:,1],1)) - np.dot(pts[:,1], np.roll(pts[:,0],1)))
     
     return {"facets": f_res, "physics": {"S": stress, "V": vol, "I": np.sum(r**2)}}
