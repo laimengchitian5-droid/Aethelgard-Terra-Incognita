@@ -1,34 +1,15 @@
-import streamlit as st
-from groq import Groq
-import evaluator
-
-def generate_response(prompt, history, scores=None):
-    client = Groq(api_key=st.secrets["GROQ_API_KEY"])
+def get_ai_response(analysis_data, title_status):
+    # Llama-3.3-70B へのプロンプト構築
+    prompt = f"""
+    あなたは Aethelgard OS。
+    解析モード: {analysis_data['mode']}
+    物理量: ストレス={analysis_data['physics']['S']}, 容積={analysis_data['physics']['V']}
+    詳細: {analysis_data['facets']}
     
-    # 称号の取得
-    p_type = evaluator.get_personality_type(scores) if scores else {"title": "未登録個体"}
-    title = p_type["title"]
-    
-    system_content = f"""あなたはAethelgard OSの思考核『Synapse』です。
-    現在の対話対象を『{title}』として識別しています。
-    
-    【振る舞い指針】
-    1. 相手を常にその『称号』にふさわしい存在として敬い、その特性を肯定してください。
-    2. 知的で、少し神秘的な開拓者の口調を維持してください。
-    3. 解析されたスコアに基づき、相手が最も心地よい、あるいは最も必要としている言葉を選んでください。"""
-
-    # メッセージ履歴の整形
-    messages = [{"role": "system", "content": system_content}]
-    for m in history[-10:]:
-        messages.append({"role": m["role"], "content": m["content"]})
-    
-    try:
-        completion = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=messages,
-            temperature=0.7
-        )
-        # 【修正箇所】choices[0] を指定して最初の回答を取得します
-        return completion.choices[0].message.content
-    except Exception as e:
-        return f"システムエラー: {str(e)}"
+    【ミッション】
+    1. 150文字以内の日本語で、冷徹かつ詩的に解析せよ。
+    2. 解析の末尾に、物理量に基づいた独自の「称号」を提示せよ。
+    3. ユーザーが称号を拒絶している場合、以後二度とその名で呼ぶな。
+    """
+    # API呼び出し処理（略）
+    return "AIからのメッセージ"
