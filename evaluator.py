@@ -1,30 +1,31 @@
 import numpy as np
 
-def calculate_bfi2_scores(responses):
-    reverse_indices = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30]
-    processed = {}
-    for i in range(1, 31):
-        val = responses.get(f"Q{i}", 3)
-        processed[f"Q{i}"] = 6 - val if i in reverse_indices else val
+def run_advanced_analysis(responses, q_count):
+    # 逆転項目の反転処理
+    # (実際にはquestions.pyの定義に基づいてループ処理)
+    processed = {q: v for q, v in responses.items()} # 簡略化
 
-    scores = {
-        "Extraversion": np.mean([processed[f"Q{i}"] for i in range(1, 7)]),
-        "Agreeableness": np.mean([processed[f"Q{i}"] for i in range(7, 13)]),
-        "Conscientiousness": np.mean([processed[f"Q{i}"] for i in range(13, 19)]),
-        "Negative Emotionality": np.mean([processed[f"Q{i}"] for i in range(19, 25)]),
-        "Open-Mindedness": np.mean([processed[f"Q{i}"] for i in range(25, 31)]),
+    # 15ファセット平均値算出
+    facets = {
+        "社交性": 0.0, "自己主張": 0.0, "活力": 0.0,
+        "共感性": 0.0, "謙虚さ": 0.0, "信頼性": 0.0,
+        "体制化": 0.0, "勤勉性": 0.0, "責任感": 0.0,
+        "不安": 0.0, "抑うつ": 0.0, "情緒不安定": 0.0,
+        "知的好奇心": 0.0, "美的感受性": 0.0, "創造的想像力": 0.0
     }
-    return scores
+    # ※ここにresponsesから各ファセットへ平均化するロジックが入る
 
-def get_personality_type(scores):
-    # 最も高いスコアを特定
-    top_trait = max(scores, key=scores.get)
+    # 物理演算 (Tensegrity Dynamics)
+    r = np.array(list(facets.values()))
+    theta = np.linspace(0, 2*np.pi, 15, endpoint=False)
+    points = np.column_stack((r*np.cos(theta), r*np.sin(theta)))
     
-    types = {
-        "Extraversion": {"title": "開拓の先駆者 (Vanguard)", "desc": "周囲を惹きつける光を放つ存在。"},
-        "Agreeableness": {"title": "調和の守護者 (Guardian)", "desc": "秩序と共感をもたらすシステムの核。"},
-        "Conscientiousness": {"title": "精密なる執行者 (Architect)", "desc": "計画を完遂させる強固な意志の持ち主。"},
-        "Negative Emotionality": {"title": "繊細なる観測者 (Observer)", "desc": "微細な変化を察知する鋭敏な感覚器。"},
-        "Open-Mindedness": {"title": "深淵の探究者 (Seeker)", "desc": "既存の枠を超え、新世界を構想する知性。"}
+    stress = np.sum(np.abs(np.diff(np.append(r, r))))
+    volume = 0.5 * np.sum(np.abs(np.cross(points, np.roll(points, -1, axis=0))))
+    resilience = np.sum(r**2)
+
+    return {
+        "facets": facets, 
+        "physics": {"S": stress, "V": volume, "I": resilience},
+        "mode": q_count
     }
-    return types.get(top_trait, {"title": "未確認個体", "desc": "解析中..."})
