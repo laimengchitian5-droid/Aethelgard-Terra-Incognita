@@ -1,18 +1,21 @@
-# synapse.py
 import streamlit as st
 from groq import Groq
+import evaluator
 
 def generate_response(prompt, history, scores=None):
     client = Groq(api_key=st.secrets["GROQ_API_KEY"])
     
-    # 性格スコアに基づいたシステムプロンプトの動的生成
-    if scores:
-        summary = ", ".join([f"{k}:{v:.1f}" for k, v in scores.items()])
-        system_content = f"""あなたはAethelgard OSです。
-        利用者のBFI-2診断結果（{summary}）に基づき、相手の性格に最も適した開拓者として振る舞ってください。
-        スコアが高い特性を尊重し、低い特性を補うような、知的で神秘的な対話を行ってください。"""
-    else:
-        system_content = "あなたはAethelgard OSです。まだ利用者の解析が完了していません。解析を促すような丁寧な口調で話してください。"
+    # 称号の取得
+    p_type = evaluator.get_personality_type(scores) if scores else {"title": "未登録個体"}
+    title = p_type["title"]
+    
+    system_content = f"""あなたはAethelgard OSの思考核『Synapse』です。
+    現在の対話対象を『{title}』として識別しています。
+    
+    【振る舞い指針】
+    1. 相手を常にその『称号』にふさわしい存在として敬い、その特性を肯定してください。
+    2. 知的で、少し神秘的な開拓者の口調を維持してください。
+    3. 解析されたスコアに基づき、相手が最も心地よい、あるいは最も必要としている言葉を選んでください。"""
 
     messages = [{"role": "system", "content": system_content}]
     for m in history[-10:]:
