@@ -1,40 +1,67 @@
+# main.py
 import streamlit as st
-import interface, synapse, database, constellation, telemetry, evolver, env_setup
+import interface, synapse, database, constellation, evaluator, env_setup
+import plotly.express as px
+import pandas as pd
 
-# 初期設定
 env_setup.check_env()
 interface.init_style()
 
-# セッション状態の管理
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+if "messages" not in st.session_state: st.session_state.messages = []
+if "aligned" not in st.session_state: st.session_state.aligned = False
 
-# --- サイドバー構成 ---
+# --- サイドバー ---
 with st.sidebar:
-    interface.sidebar_content()
-    telemetry.show_status()
-    st.divider()
-    constellation.draw_3d_map()
-    stage = evolver.get_evolution_stage(len(st.session_state.messages))
-    st.write(f"Current Status: **{stage}**")
+    st.title("🛡️ Aethelgard")
+    if st.session_state.aligned:
+        # レーダーチャートの表示
+        scores = st.session_state.scores
+        df = pd.DataFrame(dict(r=list(scores.values()), theta=list(scores.keys())))
+        fig = px.line_polar(df, r='r', theta='theta', line_close=True)
+        fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', font_color="white")
+        st.plotly_chart(fig, use_container_width=True)
+        if st.button("再診断を行う"):
+            st.session_state.aligned = False
+            st.rerun()
+    else:
+        st.info("精神解析プロトコル未完了")
 
-# --- メインチャット画面 ---
-st.title("🛡️ Aethelgard OS")
-st.caption("Terra Incognita: Exploring the uncharted digital frontier.")
+# --- メインコンテンツ ---
+if not st.session_state.aligned:
+    st.title("🌌 Core Alignment Protocol (BFI-2-S)")
+    st.write("Aethelgard OSをあなたの精神に同調させます。30の質問に回答してください。")
+    
+    # 質問リスト（一部抜粋。実際は30問分記述）
+    responses = {}
+    questions = [
+        "1. 社交的で、活発なほうだ", "2. 静かで、口数が少ないほうだ", 
+        "3. 活気にあふれ、他人を惹きつける", "4. 恥ずかしがり屋で、控えめなほうだ",
+        # ... 本来はここに30問分並べる
+    ]
+    
+    for i in range(1, 31):
+        responses[f"Q{i}"] = st.radio(f"項目 {i}", [1,2,3,4,5], index=2, horizontal=True, key=f"q_{i}")
+        st.divider()
 
-for msg in st.session_state.messages:
-    with st.chat_message(msg["role"]):
-        st.markdown(msg["content"])
+    if st.button("プロトコル実行（診断完了）"):
+        st.session_state.scores = evaluator.calculate_bfi2_scores(responses)
+        st.session_state.aligned = True
+        st.rerun()
 
-if prompt := st.chat_input("指令を入力..."):
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(prompt)
+else:
+    # 通常のチャット画面
+    st.title("🛡️ Aethelgard OS")
+    for msg in st.session_state.messages:
+        with st.chat_message(msg["role"]): st.markdown(msg["content"])
 
-    with st.chat_message("assistant"):
-        # synapse.pyを通じてAI応答を取得
-        response = synapse.generate_response(prompt, st.session_state.messages)
-        st.markdown(response)
+    if prompt := st.chat_input("指令を入力..."):
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"): st.markdown(prompt)
+
+        with st.chat_message("assistant"):
+            # スコアを渡して応答生成
+            res = synapse.generate_response(prompt, st.session_state.messages, st.session_state.scores)
+            st.markdown(res)
         
-    st.session_state.messages.append({"role": "assistant", "content": response})
-    database.save_log(prompt, response)
+        st.session_state.messages.append({"role": "assistant", "content": res})
+        database.save_log(prompt, res)
